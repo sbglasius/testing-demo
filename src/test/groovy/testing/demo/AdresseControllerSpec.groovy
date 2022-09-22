@@ -58,4 +58,21 @@ class AdresseControllerSpec extends Specification implements ControllerUnitTest<
         response.status == HttpStatus.FORBIDDEN.value()
     }
 
+    void 'search med adgang uden resultat'() {
+        given:
+        params.with {
+            vejnavn = 'Langelinie Alle'
+            husnr = 19
+            postnr = 2100
+        }
+        when:
+        controller.show()
+
+        then:
+        1 * controller.adresseClient.findAllByVejnavnHusnummerAndPostnr('Langelinie Alle', '19', '2100')
+
+        and:
+        response.status == HttpStatus.NOT_FOUND.value()
+    }
+
 }
