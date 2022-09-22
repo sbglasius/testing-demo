@@ -44,5 +44,18 @@ class AdresseControllerSpec extends Specification implements ControllerUnitTest<
         response.json.size() == 1
     }
 
+    void 'search uden adgang'() {
+        given:
+        controller.securityService = Stub(SecurityService)
+
+        when:
+        controller.show()
+
+        then:
+        0 * controller.adresseClient.findAllByVejnavnHusnummerAndPostnr(*_)
+
+        and:
+        response.status == HttpStatus.FORBIDDEN.value()
+    }
 
 }
