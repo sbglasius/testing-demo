@@ -3,12 +3,14 @@ package testing.demo
 import client.AdresseClient
 import grails.testing.web.controllers.ControllerUnitTest
 import model.AdresseInfo
+import org.springframework.http.HttpStatus
 import spock.lang.Specification
 
 class AdresseControllerSpec extends Specification implements ControllerUnitTest<AdresseController> {
 
     void setup() {
         controller.adresseClient = Mock(AdresseClient)
+        controller.securityService = Stub(SecurityService) { harAdgang() >> true }
     }
 
     void "find adresser"() {
@@ -23,5 +25,24 @@ class AdresseControllerSpec extends Specification implements ControllerUnitTest<
         and:
         response.json.size() == 1
     }
+
+    void 'search med adgang'() {
+        given:
+        params.with {
+            vejnavn = 'Langelinie Alle'
+            husnr = 19
+            postnr = 2100
+        }
+        when:
+        controller.show()
+
+        then:
+        1 * controller.adresseClient.findAllByVejnavnHusnummerAndPostnr('Langelinie Alle', '19', '2100') >> [
+                new AdresseInfo(tekst: 'kryf')]
+
+        and:
+        response.json.size() == 1
+    }
+
 
 }
