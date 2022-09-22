@@ -73,6 +73,10 @@ dependencies {
     testImplementation "org.seleniumhq.selenium:selenium-support:4.0.0"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver:4.0.0"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver:4.0.0"
+    
+    implementation 'io.micronaut:micronaut-http-client'
+    
+    implementation 'sector9:sector9-grails-plugin:10.0.0'
 }
 
 bootRun {
@@ -97,15 +101,7 @@ tasks.withType(Test) {
     useJUnitPlatform()
 }
 
-webdriverBinaries {
-    if (!System.getenv().containsKey('GITHUB_ACTIONS')) {
-        chromedriver {
-            version = '2.45.0'
-            fallbackTo32Bit = true
-        }
-        geckodriver '0.30.0'
-    }
-}
+
 
 tasks.withType(Test) {
     systemProperty "geb.env", System.getProperty('geb.env')
