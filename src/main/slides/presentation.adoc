@@ -1,0 +1,406 @@
+= Spock Stubbing & Mocking
+:source-highlighter: highlightjs
+:highlightjs-languages: yaml, groovy
+
+== Spock
+
+> Spock is a testing and specification framework for Java and Groovy applications.
+What makes it stand out from the crowd is its beautiful and highly expressive specification language.
+
+== Interaction based testing
+
+[source,groovy]
+----
+class Publisher {
+  List<Subscriber> subscribers = []
+  int messageCount = 0
+  void send(String message){
+    subscribers*.receive(message)
+    messageCount++
+  }
+}
+
+interface Subscriber {
+  void receive(String message)
+}
+----
+
+== Mock
+
+> Mocking is the act of describing (mandatory) interactions between the object under specification and its collaborators.
+
+=== The Specification setup
+
+[source,groovy]
+----
+class PublisherSpec extends Specification {
+  Publisher publisher = new Publisher()
+
+  Subscriber subscriber = Mock()
+  Subscriber subscriber2 = Mock()
+
+  def setup() {
+    publisher.subscribers << subscriber << subscriber2
+  }
+}
+----
+
+=== An alternative setup
+
+[source,groovy]
+----
+class PublisherSpec extends Specification {
+  Publisher publisher = new Publisher()
+
+  def subscriber = Mock(Subscriber)
+  def subscriber2 = Mock(Subscriber)
+
+  def setup() {
+    publisher.subscribers << subscriber << subscriber2
+  }
+}
+----
+
+=== Mocking
+
+[source,groovy]
+----
+def "should send messages to all subscribers"() {
+  when:
+  publisher.send("hello")
+
+  then:
+  1 * subscriber.receive("hello")
+  1 * subscriber2.receive("hello")
+}
+----
+
+=== Constraints
+
+----
+1 * subscriber.receive("hello")
+|   |          |       |
+|   |          |       argument constraint
+|   |          method constraint
+|   target constraint
+cardinality
+----
+
+=== Cardinality
+
+[%step]
+[source,groovy]
+----
+1 * controller.someService.hasAccess()
+----
+
+[%step]
+[source,groovy]
+----
+(1..3) * controller.someService.hasAccess()
+----
+
+[%step]
+[source,groovy]
+----
+(1.._) * controller.someService.hasAccess()
+----
+
+[%step]
+[source,groovy]
+----
+(_..3) * controller.someService.hasAccess()
+----
+
+[%step]
+[source,groovy]
+----
+_ * controller.someService.hasAccess()
+----
+
+=== Target 
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive("hello") 
+----
+
+[%step]
+[source,groovy]
+----
+1 * _.receive("hello")
+----
+
+=== Method
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive("hello") 
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber./r.*e/("hello") 
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.status // same as: 1 * subscriber.getStatus()
+----
+
+=== Arguments
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive("hello")
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive(!"hello")  
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive()        
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive(_)
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive(*_) 
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive(!null)  
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive(_ as String)
+----
+
+=== Arguments (check)
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive({ it.size() > 3 && it.contains('a') })
+----
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive(_) >> { String msg ->
+    with(msg)  {
+        size() > 3 
+        contains('a') 
+    }
+}
+----
+
+=== Strict Mocking
+
+[%step]
+[source,groovy]
+----
+when:
+publisher.publish("hello")
+
+then:
+1 * subscriber.receive("hello") 
+----
+
+[%step]
+[source,groovy,%step]
+----
+_ * auditing._ 
+----
+
+[%step]
+[source,groovy]
+----
+0 * _
+----
+
+=== Invocation order
+
+[%step]
+[source,groovy]
+----
+then:
+2 * subscriber.receive("hello")
+1 * subscriber.receive("goodbye")
+----
+
+[%step]
+Matches
+
+[%step]
+* `hello` `hello` `goodbye`
+* `hello` `goodbye` `hello`
+* `goodbye` `hello` `hello`
+
+=== Invocation order contd...
+
+[%step]
+[source,groovy]
+----
+then:
+2 * subscriber.receive("hello")
+
+then:
+1 * subscriber.receive("goodbye")
+----
+
+[%step]
+Matches
+
+[%step]
+* `hello` `hello` `goodbye`
+
+== Spock Stub
+
+> Stubbing is the act of making collaborators respond to method calls in a certain way.
+
+=== Stubbing example
+
+[source,groovy]
+----
+interface Subscriber {
+    String receive(String message)
+}
+----
+
+=== Fixed value
+
+[%step]
+[source,groovy]
+----
+subscriber.receive(_) >> "ok"
+----
+
+[%step]
+--
+It reads:
+
+"When subscriber receives a message respond `ok` "
+--
+
+=== Constraints
+
+----
+subscriber.receive(_) >> "ok"
+|          |       |     |
+|          |       |     response generator
+|          |       argument constraint
+|          method constraint
+target constraint
+----
+
+=== Argument constraints
+
+[%step]
+[source,groovy]
+----
+subscriber.receive("message1") >> "ok"
+----
+
+[%step]
+[source,groovy]
+----
+subscriber.receive("message2") >> "fail"
+----
+
+=== Return Sequence of Values
+
+[%step]
+[source,groovy]
+----
+subscriber.receive(_) >>> ["ok", "error", "ok"]
+----
+
+[%step]
+[source,groovy]
+----
+subscriber.receive(_) >>> ["ok", "error"] >> { throw new InternalError() } >> "ok"
+----
+
+
+
+=== Computed return value
+
+[%step]
+[source,groovy]
+----
+subscriber.receive(_) >> { args -> args[0].size() > 3 ? "ok" : "fail" }
+----
+
+[%step]
+[source,groovy]
+----
+subscriber.receive(_) >> { String msg -> msg.size() > 3 ? "ok" : "fail" }
+----
+
+== Mock + Stub
+
+[%step]
+[source,groovy]
+----
+1 * subscriber.receive("message1") >> "ok"
+1 * subscriber.receive("message2") >> "fail"
+----
+
+== Bad practice 
+
+Some of our own laundry
+
+=== DefaultSagsanmodningReglerServiceSpec.groovy:43
+
+[source,groovy]
+----
+service.defaultSagsopslagsreglerService = Mock(DefaultSagsopslagsreglerService) {
+    validerHentSagsinformation(sagsnummer) >> sag
+}
+----
+
+[%step]
+No cardinality, should be `Stub`
+
+=== PartensReferenceReglerServiceSpec.groovy:23
+[source,groovy]
+----
+service.defaultSagsopslagService = Mock(DefaultSagsopslagService) {
+    validerOgHentSag(kladde) >> sagskladde
+    validerOgHentSag(underTilpasning) >> sagUnderTilpasning
+    validerOgHentSag(underBehandling) >> sagUnderBehandling
+}
+service.defaultEntitetsreglerService = Mock(DefaultEntitetsreglerService) {
+    validerEntitetsinformation('', _) >> false
+    validerEntitetsinformation(' ', _) >> false
+    validerEntitetsinformation(null, _) >> false
+}
+service.defaultSagstilstandService = Mock(DefaultSagstilstandService) {
+    hentNuvaerendeTilstand(sagskladde) >> Sagstilstandsnavn.SAGSKLADDE
+    hentNuvaerendeTilstand(sagUnderTilpasning) >> Sagstilstandsnavn.UNDER_TILPASNING
+    hentNuvaerendeTilstand(sagUnderBehandling) >> Sagstilstandsnavn.UNDER_BEHANDLING
+}
+----
+
+

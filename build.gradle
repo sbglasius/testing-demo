@@ -10,6 +10,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.github.node-gradle.node" version "3.4.0"
+}
+
 version "0.1"
 group "testing.demo"
 
@@ -119,4 +123,14 @@ tasks.withType(Test) {
 assets {
     minifyJs = true
     minifyCss = true
+}
+node {
+    download = true
+    nodeProjectDir = file("${project.projectDir}/src/main/slides")
+}
+
+task revealjs(type: NpxTask, group: 'revealjs') {
+    dependsOn npmInstall
+    command = 'asciidoctor-revealjs'
+    args = ['presentation.adoc']
 }
