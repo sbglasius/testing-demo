@@ -1,4 +1,9 @@
 = Spock Stubbing & Mocking
+:imagesdir: images
+:title-slide-background-image: spock-logo.svg
+:title-slide-transition: zoom
+:title-slide-transition-speed: fast
+:customcss: ./presentation.css
 :source-highlighter: highlightjs
 :highlightjs-languages: yaml, groovy
 
@@ -253,9 +258,9 @@ then:
 Matches
 
 [%step]
-* `hello` `hello` `goodbye`
-* `hello` `goodbye` `hello`
-* `goodbye` `hello` `hello`
+* `hello`, `hello`, `goodbye`
+* `hello`, `goodbye`, `hello`
+* `goodbye`, `hello`, `hello`
 
 === Invocation order contd...
 
@@ -273,7 +278,7 @@ then:
 Matches
 
 [%step]
-* `hello` `hello` `goodbye`
+* `hello`, `hello`, `goodbye`
 
 == Spock Stub
 
@@ -339,7 +344,9 @@ subscriber.receive(_) >>> ["ok", "error", "ok"]
 [%step]
 [source,groovy]
 ----
-subscriber.receive(_) >>> ["ok", "error"] >> { throw new InternalError() } >> "ok"
+subscriber.receive(_) >>> ["ok", "error"] >> 
+                          { throw new InternalError() } >> 
+                          "ok"
 ----
 
 
@@ -349,13 +356,17 @@ subscriber.receive(_) >>> ["ok", "error"] >> { throw new InternalError() } >> "o
 [%step]
 [source,groovy]
 ----
-subscriber.receive(_) >> { args -> args[0].size() > 3 ? "ok" : "fail" }
+subscriber.receive(_) >> { args -> 
+   args[0].size() > 3 ? "ok" : "fail" 
+}
 ----
 
 [%step]
 [source,groovy]
 ----
-subscriber.receive(_) >> { String msg -> msg.size() > 3 ? "ok" : "fail" }
+subscriber.receive(_) >> { String msg -> 
+    msg.size() > 3 ? "ok" : "fail" 
+}
 ----
 
 == Mock + Stub
@@ -371,9 +382,10 @@ subscriber.receive(_) >> { String msg -> msg.size() > 3 ? "ok" : "fail" }
 
 Some of our own laundry
 
-=== DefaultSagsanmodningReglerServiceSpec.groovy:43
+=== Eksempel 1
 
 [source,groovy]
+.DefaultSagsanmodningReglerServiceSpec.groovy:43
 ----
 service.defaultSagsopslagsreglerService = Mock(DefaultSagsopslagsreglerService) {
     validerHentSagsinformation(sagsnummer) >> sag
@@ -383,8 +395,10 @@ service.defaultSagsopslagsreglerService = Mock(DefaultSagsopslagsreglerService) 
 [%step]
 No cardinality, should be `Stub`
 
-=== PartensReferenceReglerServiceSpec.groovy:23
+=== Eksempel 2 
+
 [source,groovy]
+.PartensReferenceReglerServiceSpec.groovy:23
 ----
 service.defaultSagsopslagService = Mock(DefaultSagsopslagService) {
     validerOgHentSag(kladde) >> sagskladde

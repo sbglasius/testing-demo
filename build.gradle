@@ -81,6 +81,9 @@ dependencies {
     implementation 'io.micronaut:micronaut-http-client'
     
     implementation 'sector9:sector9-grails-plugin:10.0.0'
+
+    testImplementation platform('com.agorapulse:gru-bom:1.2.4')
+    testImplementation 'com.agorapulse:gru-grails'
 }
 
 bootRun {
